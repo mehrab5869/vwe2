@@ -1,7 +1,7 @@
 """
 API Proxy Management Platform - Main Application
 """
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
@@ -77,7 +77,18 @@ async def health_check():
 # Include routers (health must be before gateway to avoid route conflicts)
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
 app.include_router(user.router, prefix="/user", tags=["user"])
-app.include_router(gateway.router, tags=["gateway"])
+app.include_router(gateway.router, prefix="/proxy", tags=["gateway"])
+
+# Catch all for any other paths
+@app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+async def catch_all(path: str, request: Request):
+    """Catch all endpoint for debugging"""
+    return {
+        "message": f"Path '{path}' not found",
+        "method": request.method,
+        "available_prefixes": ["/admin", "/user", "/proxy", "/docs", "/redoc", "/health"],
+        "note": "Try accessing /admin/ or /user/ with trailing slash"
+    }
 
 
 if __name__ == "__main__":
