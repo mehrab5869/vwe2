@@ -3,11 +3,12 @@ API Proxy Management Platform - Main Application
 """
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from contextlib import asynccontextmanager
 
 from app.database import engine, Base
 from app.routers import admin, gateway, user
-from backend.app.config import settings
+from app.config import settings
 
 
 @asynccontextmanager
@@ -56,10 +57,12 @@ app.add_middleware(
 )
 
 @app.get("/")
-async def root():
+async def root(request: Request):
+    # Serve JSON for API clients
     return {
         "message": "API Proxy Management Platform",
         "version": "1.0.0",
+        "status": "running",
         "endpoints": {
             "health": "/health",
             "admin_api": "/admin",
