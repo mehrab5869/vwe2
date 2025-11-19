@@ -42,10 +42,8 @@ services:
       - ADMIN_SECRET_KEY=change-this-in-production-min-32-chars
       - ENCRYPTION_KEY=change-this-32-byte-key-in-production
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - postgres
+      - redis
     volumes:
       - ./backend:/app
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
