@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import axios from 'axios';
+import { adminApi } from './api';
 import './App.css';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 // مدیریت مسیرهای پایه (Base Routes)
 // این بخش برای تعریف مسیرهای API است که کاربران از آن‌ها استفاده می‌کنند
@@ -31,7 +29,7 @@ function BaseRoutes() {
 
   const loadRoutes = async () => {
     try {
-      const res = await axios.get(`${API_URL}/admin/base_routes`);
+      const res = await adminApi.get('/admin/base_routes');
       setRoutes(res.data);
     } catch (error) {
       console.error('خطا در بارگذاری مسیرها:', error);
