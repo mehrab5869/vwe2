@@ -18,6 +18,12 @@ RUN pip install --upgrade pip \
 # copy project
 COPY . /app
 
+# copy backend files to maintain structure
+COPY backend /app/backend
+
+# Ensure backend is also accessible from root
+RUN ln -sf /app/backend/main.py /app/main.py || true
+
 # ensure python can import from /app
 ENV PYTHONPATH=/app:/app/backend
 
@@ -31,5 +37,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
 COPY start.py /app/start.py
 RUN chmod +x /app/start.py
 
-# run the startup helper (it auto-detects the correct module and runs uvicorn)
-CMD ["bash", "-lc", "python /app/start.py"]
+# run the app directly since we know main:app works
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--loop", "uvloop", "--workers", "1"]

@@ -16,13 +16,15 @@ if os.path.isdir(backend_dir) and backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
 if os.path.isdir("/app") and "/app" not in sys.path:
     sys.path.insert(0, "/app")
+if os.path.isdir("/app/backend") and "/app/backend" not in sys.path:
+    sys.path.insert(0, "/app/backend")
 
 candidates = [
     "app.main",
     "main",
+    "backend.main",
     "src.main",
     "server",
-    "backend.main",
     "api.main",
     "app.app",
     "application",
