@@ -1,15 +1,15 @@
-# Dockerfile.simple — replace existing Dockerfile.simple
+# Dockerfile.simple — minimal, robust entrypoint
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# system deps for building wheels and postgres client libs
+# system deps for building and postgres support
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
     gcc build-essential libpq-dev curl \
  && rm -rf /var/lib/apt/lists/*
 
-# copy deps first for docker cache
+# copy deps first for cache-friendly builds
 COPY requirements.txt /app/requirements.txt
 
 RUN pip install --upgrade pip \
@@ -18,14 +18,18 @@ RUN pip install --upgrade pip \
 # copy project
 COPY . /app
 
-# make sure python can import packages from /app
+# ensure python can import from /app
 ENV PYTHONPATH=/app
 
 EXPOSE 8000
 
-# healthcheck: use python stdlib to avoid curl dependency
+# healthcheck using python stdlib (no curl required)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
   CMD python -c "import urllib.request,sys; urllib.request.urlopen('http://localhost:8000/health'); sys.exit(0)" || exit 1
 
-# try app at app.main:app first (common), fallback to main:app
-CMD ["bash", "-lc", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} || uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# copy start helper and make executable
+COPY start.py /app/start.py
+RUN chmod +x /app/start.py
+
+# run the startup helper (it auto-detects the correct module and runs uvicorn)
+CMD ["bash", "-lc", "python /app/start.py"]
