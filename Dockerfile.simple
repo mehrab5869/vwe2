@@ -1,31 +1,30 @@
+# Simple backend-only deployment for Koyeb
 FROM python:3.11-slim
 
 WORKDIR /app
-# copy lock/pyproject or requirements
-COPY pyproject.toml poetry.lock /app/   # اگر poetry استفاده می‌کنی
-# یا: COPY requirements.txt /app/
 
-# install system deps + curl (اختیاری) و build-deps
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
     postgresql-client \
-    curl \
-  && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*
 
-# install python deps (poetry example)
-RUN pip install --upgrade pip poetry \
-  && poetry config virtualenvs.create false \
-  && poetry install --no-dev
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# اگر requirements.txt:
-# RUN pip install -r requirements.txt
+# Copy backend code
+COPY backend/ ./
 
-COPY . /app
+# Create necessary directories
+RUN mkdir -p /app/app
 
+# Expose port
 EXPOSE 8000
 
-# healthcheck با پایتون تا نیازی به curl نباشه
+# Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-  CMD python -c "import urllib.request, sys; urllib.request.urlopen('http://localhost:8000/health'); sys.exit(0)" || exit 1
+    CMD curl -f http://localhost:8000/health || exit 1
 
-CMD ["bash", "-lc", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Start command
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
