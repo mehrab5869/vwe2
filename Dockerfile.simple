@@ -1,34 +1,31 @@
-# Dockerfile.simple
+# Dockerfile.simple — replace existing Dockerfile.simple
 FROM python:3.11-slim
 
-# set workdir
 WORKDIR /app
 
-# system deps (gcc برای build برخی پکیج‌ها لازم است)
+# system deps for building wheels and postgres client libs
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-    gcc \
-    build-essential \
-    libpq-dev \
-    curl \
+    gcc build-essential libpq-dev curl \
  && rm -rf /var/lib/apt/lists/*
 
-# copy requirements first for cache-friendly builds
+# copy deps first for docker cache
 COPY requirements.txt /app/requirements.txt
 
-# upgrade pip and install python deps
 RUN pip install --upgrade pip \
  && pip install -r /app/requirements.txt
 
 # copy project
 COPY . /app
 
-# expose (uvicorn will use $PORT)
+# make sure python can import packages from /app
+ENV PYTHONPATH=/app
+
 EXPOSE 8000
 
-# simple healthcheck using python stdlib (no curl needed)
+# healthcheck: use python stdlib to avoid curl dependency
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
   CMD python -c "import urllib.request,sys; urllib.request.urlopen('http://localhost:8000/health'); sys.exit(0)" || exit 1
 
-# run uvicorn on $PORT (Sliplane/most hosts provide PORT env)
-CMD ["bash", "-lc", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# try app at app.main:app first (common), fallback to main:app
+CMD ["bash", "-lc", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} || uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
