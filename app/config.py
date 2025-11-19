@@ -10,9 +10,9 @@ if backend_app_path not in sys.path:
 
 # Import from backend.app.config with fallback
 try:
-    from backend.app.config import *
+    from backend.app.config import settings
     # If DATABASE_URL is localhost, try to use environment variable or fallback to SQLite
-    if 'DATABASE_URL' in locals() and 'localhost:5432' in DATABASE_URL:
+    if 'localhost:5432' in settings.DATABASE_URL:
         # Check if DATABASE_URL is provided in environment
         env_db_url = os.getenv("DATABASE_URL")
         if env_db_url and 'localhost' not in env_db_url:
@@ -22,6 +22,15 @@ try:
             # Fallback to SQLite for development
             DATABASE_URL = "sqlite:///./app.db"
             print(f"Using SQLite fallback database: {DATABASE_URL}")
+    else:
+        DATABASE_URL = settings.DATABASE_URL
+    
+    # Export other settings
+    REDIS_URL = settings.REDIS_URL
+    ADMIN_SECRET_KEY = settings.ADMIN_SECRET_KEY
+    ENCRYPTION_KEY = settings.ENCRYPTION_KEY
+    API_HOST = settings.API_HOST
+    API_PORT = settings.API_PORT
 except ImportError as e:
     print(f"Could not import backend config: {e}")
     # Fallback settings

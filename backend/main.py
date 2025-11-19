@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 
 from app.database import engine, Base
 from app.routers import admin, gateway, user
-from app.config import settings
+from backend.app.config import settings
 
 
 @asynccontextmanager
