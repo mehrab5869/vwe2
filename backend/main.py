@@ -12,8 +12,13 @@ from app.config import settings
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Create tables
-    Base.metadata.create_all(bind=engine)
+    # Startup: Try to create tables if database is available
+    try:
+        Base.metadata.create_all(bind=engine)
+        print("Database tables created successfully")
+    except Exception as e:
+        print(f"Warning: Could not connect to database: {e}")
+        print("Continuing without database connection...")
     yield
     # Shutdown: cleanup if needed
     pass
