@@ -1,19 +1,41 @@
+# Multi-stage build for production
+FROM node:18-alpine AS frontend-builder
+
+# Build Admin UI
+WORKDIR /app/admin-ui
+COPY admin-ui/package*.json ./
+RUN npm install
+COPY admin-ui/ .
+RUN npm run build
+
+# Build User Dashboard
+WORKDIR /app/user-dashboard
+COPY user-dashboard/package*.json ./
+RUN npm install
+COPY user-dashboard/ .
+RUN npm run build
+
+# Production stage
 FROM python:3.11-slim
 
 WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    gcc \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy backend files
+# Install Python dependencies
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy all backend files
+# Copy backend code
 COPY backend/ .
 COPY app/ ./app/
+
+# Copy frontend builds to app directory
+COPY --from=frontend-builder /app/admin-ui/build ./static/admin
+COPY --from=frontend-builder /app/user-dashboard/build ./static/user
 
 # Create non-root user
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
