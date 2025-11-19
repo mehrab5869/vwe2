@@ -1,26 +1,34 @@
-# Dockerfile.simple (fixed for Koyeb single-service deploy)
+# Dockerfile.simple
 FROM python:3.11-slim
 
-# Workdir inside container
+# set workdir
 WORKDIR /app
 
-# Minimal system deps (remove heavy toolchain)
-RUN apt-get update && apt-get install -y --no-install-recommends libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+# system deps (gcc برای build برخی پکیج‌ها لازم است)
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+    gcc \
+    build-essential \
+    libpq-dev \
+    curl \
+ && rm -rf /var/lib/apt/lists/*
 
-# Install backend dependencies (use backend/requirements.txt)
-COPY backend/requirements.txt /app/requirements.txt
-RUN pip install --upgrade pip && pip install --no-cache-dir -r /app/requirements.txt
+# copy requirements first for cache-friendly builds
+COPY requirements.txt /app/requirements.txt
 
-# Copy ONLY backend source so /app/main.py exists
-COPY backend/ /app/
+# upgrade pip and install python deps
+RUN pip install --upgrade pip \
+ && pip install -r /app/requirements.txt
 
-# Expose default port; platform will set $PORT
+# copy project
+COPY . /app
+
+# expose (uvicorn will use $PORT)
 EXPOSE 8000
 
-# Healthcheck respecting $PORT (fallback 8000)
+# simple healthcheck using python stdlib (no curl needed)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD python -c "import os, urllib.request; p=os.environ.get('PORT','8000'); urllib.request.urlopen('http://localhost:'+p+'/health')" || exit 1
+  CMD python -c "import urllib.request,sys; urllib.request.urlopen('http://localhost:8000/health'); sys.exit(0)" || exit 1
 
-# Run uvicorn using $PORT if provided by platform
+# run uvicorn on $PORT (Sliplane/most hosts provide PORT env)
 CMD ["bash", "-lc", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
