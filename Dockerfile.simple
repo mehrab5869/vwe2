@@ -19,7 +19,7 @@ RUN pip install --upgrade pip \
 COPY . /app
 
 # ensure python can import from /app
-ENV PYTHONPATH=/app
+ENV PYTHONPATH=/app:/app/backend
 
 EXPOSE 8000
 

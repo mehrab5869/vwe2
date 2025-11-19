@@ -9,6 +9,14 @@ from shutil import which
 PORT = os.environ.get("PORT", "8000")
 
 # common candidate module paths to try
+# Ensure Python can import packages from repo root and backend
+root = os.getcwd()
+backend_dir = os.path.join(root, "backend")
+if os.path.isdir(backend_dir) and backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
+if os.path.isdir("/app") and "/app" not in sys.path:
+    sys.path.insert(0, "/app")
+
 candidates = [
     "app.main",
     "main",
@@ -36,15 +44,17 @@ for mod in candidates:
 # fallback: scan for files containing "FastAPI("
 if not found:
     import pathlib, re
-    p = pathlib.Path("/app")
+    base_dir = pathlib.Path(os.environ.get("APP_ROOT", os.getcwd()))
+    if pathlib.Path("/app").exists():
+        base_dir = pathlib.Path("/app")
     pattern = re.compile(r"\bFastAPI\s*\(", re.I)
-    for py in list(p.rglob("*.py")):
+    for py in list(base_dir.rglob("*.py")):
         try:
             text = py.read_text(encoding="utf-8")
         except Exception:
             continue
         if pattern.search(text):
-            rel = py.relative_to(p)
+            rel = py.relative_to(base_dir)
             mod_name = ".".join(rel.with_suffix("").parts)
             try:
                 m = importlib.import_module(mod_name)
