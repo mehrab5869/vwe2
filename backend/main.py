@@ -28,7 +28,9 @@ app = FastAPI(
     title="API Proxy Management Platform",
     description="Admin Dashboard and Public Gateway for API Proxy Management",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
 # CORS middleware
@@ -52,6 +54,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/")
+async def root():
+    return {
+        "message": "API Proxy Management Platform",
+        "version": "1.0.0",
+        "endpoints": {
+            "health": "/health",
+            "admin_api": "/admin",
+            "user_api": "/user",
+            "gateway": "/proxy/*",
+            "docs": "/docs"
+        }
+    }
 
 @app.get("/health")
 async def health_check():
