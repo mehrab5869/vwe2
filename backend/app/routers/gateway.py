@@ -23,6 +23,23 @@ from app.schemas import ProxyTarget, FallbackOnExhaust
 router = APIRouter()
 
 
+@router.get("/")
+async def gateway_root():
+    """Gateway API root - shows usage information"""
+    return {
+        "message": "Gateway API",
+        "description": "Handles all proxied requests matching base routes",
+        "usage": {
+            "authentication": "Optional Bearer token for user tracking",
+            "examples": {
+                "openai_chat": "POST /v1/chat/completions with OpenAI-compatible format",
+                "anthropic": "POST /v1/messages with Anthropic format"
+            }
+        },
+        "note": "Routes are dynamically matched based on configured base URLs"
+    }
+
+
 def find_matching_route(path: str, db: Session) -> Optional[BaseRoute]:
     """Find route matching the path (exact match first, then prefix)"""
     # Try exact match first

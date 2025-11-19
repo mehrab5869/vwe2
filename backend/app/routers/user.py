@@ -17,6 +17,27 @@ from datetime import timedelta
 router = APIRouter()
 
 
+@router.get("/")
+async def user_root():
+    """User API root - lists available endpoints"""
+    return {
+        "message": "User API",
+        "available_endpoints": {
+            "register": "POST /register",
+            "login": "POST /login",
+            "get_profile": "GET /me",
+            "quota": "GET /quota",
+            "api_keys": {
+                "list": "GET /api-keys",
+                "create": "POST /api-keys",
+                "delete": "DELETE /api-keys/{key_id}",
+                "toggle": "PATCH /api-keys/{key_id}/toggle"
+            }
+        },
+        "note": "Authentication required for most endpoints (Bearer token)"
+    }
+
+
 # Schemas
 class UserRegister(BaseModel):
     email: EmailStr

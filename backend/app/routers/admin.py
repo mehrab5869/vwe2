@@ -22,6 +22,48 @@ from app.config import settings
 router = APIRouter()
 
 
+@router.get("/")
+async def admin_root():
+    """Admin API root - lists available endpoints"""
+    return {
+        "message": "Admin API",
+        "available_endpoints": {
+            "base_routes": {
+                "list": "GET /base_routes",
+                "create": "POST /base_routes",
+                "get": "GET /base_routes/{route_id}",
+                "update": "PATCH /base_routes/{route_id}",
+                "delete": "DELETE /base_routes/{route_id}"
+            },
+            "key_pools": {
+                "list": "GET /key_pools",
+                "create": "POST /key_pools"
+            },
+            "api_keys": {
+                "list": "GET /key_pools/{pool_id}/keys",
+                "create": "POST /key_pools/{pool_id}/keys",
+                "create_bulk": "POST /key_pools/{pool_id}/keys/bulk",
+                "update_status": "PATCH /keys/{key_id}/status",
+                "delete": "DELETE /keys/{key_id}"
+            },
+            "metrics": "GET /metrics",
+            "logs": "GET /logs",
+            "users": {
+                "list": "GET /users",
+                "create": "POST /users",
+                "delete": "DELETE /users/{user_id}",
+                "update_status": "PATCH /users/{user_id}/status"
+            },
+            "user_quotas": {
+                "create": "POST /users/{user_id}/quota",
+                "get": "GET /users/{user_id}/quota",
+                "update": "PATCH /users/{user_id}/quota"
+            }
+        },
+        "note": "All endpoints require admin authentication via ADMIN_SECRET_KEY header"
+    }
+
+
 def verify_admin_token(token: str):
     """Verify admin token (simple implementation)"""
     if token != settings.ADMIN_SECRET_KEY:
